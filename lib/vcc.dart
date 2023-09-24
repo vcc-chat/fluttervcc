@@ -93,7 +93,7 @@ class VccClient {
     return await this.peer.sendRequest("message", <String, dynamic>{
       "chat": chat,
       "session": null,
-      "msg_type": "abcd",
+      "msg_type": msgType,
       "payload": payload
     });
   }
