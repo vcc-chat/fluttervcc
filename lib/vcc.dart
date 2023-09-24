@@ -88,9 +88,22 @@ class VccClient {
         {'chat': chatid, 'name': "public", "value": public});
   }
 
-  send_message(int chat, String message) {
-    return this.peer.sendRequest(
-        "message", {"chat": chat, "msg": message, "session": null});
+  send_message(int chat,dynamic payload,
+      {String msgType = "msg"}) async {
+    return await this.peer.sendRequest("message", <String, dynamic>{
+      "chat": chat,
+      "session": null,
+      "msg_type": "abcd",
+      "payload": payload
+    });
+  }
+
+  send_text_message(int chat, String message) {
+    return this.send_message(chat, message);
+  }
+
+  send_file(int chat, String file_id, {bool is_image = false}) {
+    return this.send_message(chat, {"file_id":file_id,"is_image":is_image},msgType:"file");
   }
 
   request_oauth(String platform) async {

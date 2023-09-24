@@ -25,34 +25,41 @@ class ChatPage extends StatefulWidget {
 }
 
 class ChatMessage extends StatelessWidget {
-  late String username;
-  late String message;
+  late Map message;
   late Widget content;
-  ChatMessage ({required username, required message}) {
-    this.username = username;
-    this.message = message;
-    if (RegExp(r"::file{#(.+)}").hasMatch(message)) {
-      RegExpMatch match = RegExp(r"::file{#(.+)}").firstMatch(message)!;
+  ChatMessage(Map message) {
+    this.message=message;
+    if (mapGetDefault(message,"msg_type","")=="file") {
       // content = Text("File ${match.group(1)}",
       //     style: TextStyle(
       //       color: Colors.black87,
       //       fontSize: 16,
       //     ));
       // print("File ${match.group(1)}");
-      this.content = VccImage(id: match.group(1)!);
-    } else {
+      this.content = VccImage(id: message["payload"]["file_id"]);
+      return;
+    }
+    if(mapGetDefault(message,"msg_type","text")=="msg"){
       print(1);
       this.content = Text(
-        this.message,
+        this.message['payload'],
         style: TextStyle(
           color: Colors.black87,
           fontSize: 16,
         ),
       );
+      return;
     }
+    this.content=Text("#Unsupported message type#",
+        style: TextStyle(
+          color: Colors.red[87],
+          fontSize: 16,
+        ),
+      );
   }
   Widget build(BuildContext context) {
-    bool isSender = this.username == vccClient.username;
+    String username=this.message['username'];
+    bool isSender = username == vccClient.username;
     Widget avs = CircleAvatar(child: Text("${username[0]}"));
 
     return Row(children: [
@@ -64,7 +71,7 @@ class ChatMessage extends StatelessWidget {
         SizedBox.shrink(),
         Align(
             alignment: isSender ? Alignment.topRight : Alignment.topLeft,
-            child: Text("    ${this.username}    ")),
+            child: Text("    ${username}    ")),
         ChatBubble(
           child: this.content,
           isSender: isSender,
@@ -169,7 +176,7 @@ class _ChatPageState extends State<ChatPage> {
                 if (response.statusCode != 200) {
                   return;
                 }
-                vccClient.send_message(this.currentChat[0], "::file{#$id}");
+                vccClient.send_file(this.currentChat[0], id);
               }());
             },
             icon: Icon(Icons.upload),
@@ -177,7 +184,7 @@ class _ChatPageState extends State<ChatPage> {
         ],
         send: (msg) {
           print(msg);
-          vccClient.send_message(this.currentChat[0], msg);
+          vccClient.send_text_message(this.currentChat[0], msg);
         });
 
     //   if (message['chat'] == this.currentChat[0]) {
@@ -202,8 +209,7 @@ class _ChatPageState extends State<ChatPage> {
       this.messages[chat] = [];
       this.messageWidgets[chat] = [];
     }
-    this.messageWidgets[chat]!.add(
-        ChatMessage(username: message['username'], message: message['msg']));
+    this.messageWidgets[chat]!.add(ChatMessage(message));
     this.messages[chat]!.add(message);
   }
 
